@@ -13,4 +13,25 @@ soup = BeautifulSoup(req.content, 'html.parser');
 
 # Find all the rows of the table
 table = soup.find_all("tr");
-print(table);
+
+# Iterate through the tables and add the 
+for row in table : 
+	# Grab name
+	name = row.contents[1].a.string; 
+
+	# Grab title and city
+	raw = row.contents[3].find_all('a');
+	
+	# Skip the header of the table
+	if(len(raw) != 2) :
+		continue;
+
+	# Grab police title
+	title = raw[0].string
+
+	# Grab just the city
+	cityRaw = raw[1].string.split(',');
+	city = cityRaw[0] # Just the city not the year
+
+	print("Name: " + name + ", Title: " + title, ", City: " + city);
+	
