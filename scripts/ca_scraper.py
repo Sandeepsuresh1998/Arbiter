@@ -1,37 +1,58 @@
 from bs4 import BeautifulSoup
 import requests
-
+import pandas as pd
 # Creating a header that looks like a browser to spoof site
 headers = requests.utils.default_headers()
 # headers.update({ 'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0'})
 
-# CA police salary page from 2019
-url = "https://transparentcalifornia.com/salaries/search/?q=Police&a=&y=2019"
-req = requests.get(url, headers);
-soup = BeautifulSoup(req.content, 'html.parser');
-# print(soup.prettify());
+# Create dataframe for police info
+column_names = ["Name", "Title", "City"]
+police_df = pd.DataFrame(columns=column_names);
 
-# Find all the rows of the table
-table = soup.find_all("tr");
+for pageNum in range(1,139) :
+	# CA police salary page from 2019
+	if(pageNum == 1) :
+		url = "https://transparentcalifornia.com/salaries/search/?q=Police&a=&y=2019"
+	else : 
+		url = "https://transparentcalifornia.com/salaries/search/?q=Police&a=&y=2019&page=" + str(pageNum)
+	req = requests.get(url, headers);
+	soup = BeautifulSoup(req.content, 'html.parser');
+	# print(soup.prettify());
 
-# Iterate through the tables and add the 
-for row in table : 
-	# Grab name
-	name = row.contents[1].a.string; 
+	# Find all the rows of the table
+	table = soup.find_all("tr");
 
-	# Grab title and city
-	raw = row.contents[3].find_all('a');
-	
-	# Skip the header of the table
-	if(len(raw) != 2) :
-		continue;
+	# Iterate through the tables and add the 
+	items = 0
 
-	# Grab police title
-	title = raw[0].string
+	for row in table : 
+		# Grab name
+		name = row.contents[1].a.string; 
 
-	# Grab just the city
-	cityRaw = raw[1].string.split(',');
-	city = cityRaw[0] # Just the city not the year
+		# Grab title and city
+		raw = row.contents[3].find_all('a');
+		
+		# Skip the header of the table
+		if(len(raw) != 2) :
+			continue;
 
-	print("Name: " + name + ", Title: " + title, ", City: " + city);
-	
+		# Grab police title
+		title = raw[0].string
+
+		# Grab just the city
+		cityRaw = raw[1].string.split(',');
+		city = cityRaw[0] # Just the city not the year
+
+		# Formatting the data for the dataframe
+		row = {"Name": [name], "Title:": [title], "City": [city]};
+		data = pd.DataFrame(data=row);
+		police_df = police_df.append(data, ignore_index=True);
+		items += 1;
+
+
+
+	print("Page " + str(pageNum) + " done! " + str(items) + " rows");
+
+police_df.to_csv("../data/police_data.csv");
+print(len(police_df.index));
+		
